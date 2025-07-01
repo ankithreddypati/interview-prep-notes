@@ -79,8 +79,6 @@ Practical file handling and scripting problems:
 
 
 
-https://www.glassdoor.com/Reviews/Meta-Production-Engineer-Reviews-EI_IE40772.0,4_KO5,24.htm
-
 ### Interview Tips
 1. **Practice Whiteboarding**: Use the Excalidraw diagrams for system design practice
 2. **Focus on File Handling**: Meta PE heavily emphasizes file processing and scripting
