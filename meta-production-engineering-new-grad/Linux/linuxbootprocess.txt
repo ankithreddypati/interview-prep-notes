@@ -1,0 +1,46 @@
+
+// what happens when you press the power button to start computer, linux boot proces
+
+0. Power on
+  |
+
+1. BIOS/UEFI : a program called bios or uefi boots up ,which get all main parts of your computer ready for action
+            keyboard, screen , harddrive ,and soon 
+            UEFI is newer firmware spec offering faster boot times and secure boot 
+
+            Bios is tied MasterBootRecord system(partitioning schemas on SSD/HDD first 512 bytes of disk sector0 
+            ) which limit disk size to 2TB
+            slow boot time , less secure
+
+            UEFI, uses GUID partition table with no disk constraints
+            faster boot time , secure boot
+
+2. POST - bios/uefi runs a check called Poweronselftest , checks if all devices are working, if not we ll see an error 
+on the screen
+
+3.  after everything checksout with POST.  BIOS needs to find
+and load up the boot loader software by selecting the preferred disk 
+it has first pref as harddrive next is usb and so on 
+
+4. in bios system usually bootloader in in MBR starting of the disk and in UEFI seperate partion wth .efi file
+commonly used bios are grub2 
+
+5. task of the grub is to find the operating sytem kernel (linux) on disk
+ load the kernel to disk
+bios hands over control to kernel
+
+
+5. first the kernel decompresses itself on memory 
+start initiating background processes and other device drivers 
+
+6. kernel starts a init process which is systemd in modern computers in userspace .
+User space is made for users: apps, terminals, shells, GUIs, etc
+Kernel space is protected — users cannot directly access it (for safety & stability)
+To interact with the kernel, users must go through:
+System calls (e.g., read(), write(), etc.)
+Commands like ls, cat, mkdir → internally call kernel APIs
+
+7. systemd will mount the file system(/home, /proc),  background services and daemons(network mangeer , ssh , cron)
+system tagert files to enter into the mode you want 
+login service , display manger 
+bring full UI 

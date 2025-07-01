@@ -1,0 +1,19 @@
+
+the ls command ls will lists the contents i.e files folder
+-l longformat shows detailed info (permission , size and owner etc)
+-a allfiles , incluces hidden files (.git or .env)
+-h humanreadable sizes - converts file sizes to KB, MB <GB etc
+
+1. Command parsing - the shell interprets ls -lah by breaking into command ls and its options -l -a -h
+
+2. process invocation- the shell search $PATH for ls binary and executes.  
+then it does system fork() and execve() to kernel via glibc(GNU),  creating a new processes ls
+
+3.directory access - The ls process uses system calls such as open() to open the directory and getdents() 
+(or similar) to read directory entries
+
+4. metadata retrival- For each directory entry, the ls command calls stat() to obtain detailed file metadata. permissiosn, size
+
+5.Data Formatting: The ls command formats the retrieved data into a human-readable format before
+ outputting it to the terminal , For example, the -h flag converts byte sizes into human-readable units (e.g., KB, MB).and -l
+ and display to stout which the terminal reads and displays

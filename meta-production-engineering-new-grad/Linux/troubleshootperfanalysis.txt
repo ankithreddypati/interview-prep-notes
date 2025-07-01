@@ -1,0 +1,189 @@
+When diagnosing a system performance issue, 
+the first and most critical step is to verify that a real problem exists. 
+It’s tempting to jump into tools, but I always begin by asking clarifying questions:
+Has the system ever performed better? What exactly is 'slow'? Has anything changed recently?
+Is this affecting one user or all users? These help establish a baseline and prevent wasting time 
+on false alarms
+
+
+
+uptime : load average per last 1 5 , 15 minutes , 
+dmesg | tail : last few kernel log messages , check for OOM kills , disk errrors, driver issues, network dropping
+vmstat 1 : 	Realtime view of CPU, memory, swap, and I/O wait. r > cores → CPU saturation
+mpstat -P ALL 1 : This command prints CPU time breakdowns per CPU, which can be used to check for an imbalance. A single hot CPU can be evidence of a single-threaded application
+pidstat 1 :Per-process CPU usage over time — good for spotting CPU-heavy processes
+iostat -xz 1 : 	Disk I/O performance — watch await, %util, and avgqu-sz for saturation 
+free -m: Memory status — look at -/+ buffers/cache line for true free RAM.
+sar -n DEV 1 : Network interface stats — packets and bytes/sec for RX/TX.
+sar -n TCP,ETCP 1 : TCP-level metrics — connection rate, retransmits, errors.
+top : Real-time dashboard — CPU, memory, processes good for live snapshots
+
+
+CPU 
+** uptime ** : the key metric is load average which shows the average number of process either running
+or waiting for resources over the last 1 , 5 and 15 minutes 
+if this is consistently higher the number of cpu cores it might indicate that process are 
+competing for resources . but its not that straight forward , high load averages can be caused
+by CPU intensive tasks, I/O bottle necks or shortlived processes . it doesnt tell the full story 
+but its a starting point we might need to investigate further 
+
+** top ** : provides a dynamic continously updated view for the system's processes .its a dashboard
+key indicators are percent of CPU by user processes and system processes . 
+it provides snapshot only so understand more we have to watch it over time or use other tools with this
+
+dmseg : last 10 system messages , This views the last 10 system messages, if there are any. Look for errors that can cause performance issues. 
+The example above includes the oom-killer, and TCP dropping a request
+
+vmstat : multiple system components updating at once - key things cpu queu , swap activity , io waitime
+r: Number of processes running on CPU and waiting for a turn. This provides a better signal than load averages for
+determining CPU saturation, as it does not include I/O. To interpret: an “r” value greater than the CPU count is saturation.
+
+iostat: 
+continuos view of disk activity, transactions per seconds disk activity , we can see diff disk 
+things to watch key activity and percentage of time spend waiting for io operations in the CPU,
+ we can see by disk so we can see which specific disk is causing performace issues  
+
+netstat:
+tool to monitor network connections 
+netstat -a displays all active connections 
+
+
+| **Interview Symptom**               | **What You Say / Focus On**                                                                                                                           |
+| ----------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Website is down (unreachable)**   | 🔹 `ping`, `curl`, `ss -tulnp` → Is the server up and port open?<br>🔹 `systemctl status nginx`<br>🔹 Check network (`sar -n`, firewall rules), DNS   |
+| **Website crashes every 5-10 mins** | 🔹 Look for memory leaks / OOM kills → `dmesg`, `free -m`, `pidstat`, `top`<br>🔹 App logs and crash loops<br>🔹 Check cron jobs / timers             |
+| **Website is slow**                 | 🔹 Check CPU load: `uptime`, `vmstat`, `mpstat`<br>🔹 Disk I/O: `iostat -xz 1`<br>🔹 DB slowness or backend latency<br>🔹 Network latency / TCP drops |
+| **High CPU usage**                  | 🔹 `top`, `pidstat`, `perf top` → pinpoint which process<br>🔹 Is it normal (load)? Or a bug (infinite loop)?                                         |
+| **High memory usage**               | 🔹 `top` / `htop` for large `RES` memory<br>🔹 Swap usage (`vmstat`), OOM kills (`dmesg`)                                                             |
+| **Disk full or slow**               | 🔹 `df -h` and `du -sh` to check disk space<br>🔹 `iostat -xz 1` for disk I/O load                                                                    |
+| **Database slow / backend errors**  | 🔹 Check DB process (`pidstat`), logs<br>🔹 Check I/O (`iostat`) if DB is local<br>🔹 Look for query spikes                                           |
+| **High network latency / timeouts** | 🔹 `sar -n DEV 1`, `ss`, `netstat`<br>🔹 Packet drops, retries<br>🔹 DNS or firewall issues                                                           |
+
+
+
+🔴 1. Website is down (unreachable)
+You're checking if the service is running, the port is open, and networking is OK.
+
+ping domain.com:
+➤ Does it resolve? If not: DNS issue.
+➤ Does it reply? If not: Network or server down.
+
+curl http://localhost:
+➤ If it works locally but not remotely → firewall or network issue.
+➤ If it fails here too → webserver issue.
+
+ss -tulnp:
+➤ Shows which TCP/UDP ports are open and what process (PID) is listening.
+➤ Look for LISTEN on port 80 (HTTP) or 443 (HTTPS) and the name (e.g., nginx).
+
+systemctl status nginx:
+➤ Confirms if nginx is running and if it crashed or failed to start.
+
+firewall-cmd --list-all or iptables -L:
+➤ See if port 80/443 is blocked.
+
+🟠 2. Website crashes every 5-10 minutes
+Likely caused by memory issues, app bugs, or a timer/cron job.
+
+dmesg | grep -i kill:
+➤ Shows if Linux killed the app due to OOM (Out of Memory).
+
+free -m:
+➤ See if RAM is full or if swap is in heavy use.
+
+pidstat -r -p <PID>:
+➤ Check memory growth over time. If keeps growing → possible memory leak.
+
+top:
+➤ Look for process that grows in RES memory and vanishes, hinting it’s crashing.
+
+Check /var/log/syslog or app logs:
+➤ Search for patterns every 5–10 mins: fatal errors, restarts, etc.
+
+crontab -l and /etc/cron.*:
+➤ Look for periodic tasks that could be restarting or affecting the service.
+
+🟡 3. Website is slow
+Check for server load, disk speed, backend or DB issues.
+
+uptime:
+➤ Look at load average. If it's much higher than CPU cores, something is overloaded.
+
+vmstat 1:
+➤ High r (run queue) means CPU overload.
+➤ High si/so (swap in/out) = memory pressure.
+
+mpstat -P ALL 1:
+➤ Shows CPU usage per core.
+
+iostat -xz 1:
+➤ High await or %util → disk bottleneck.
+
+Check app/database latency in logs or APM tools.
+
+🔵 4. High CPU usage
+Find which process, and if it's expected or a bug.
+
+top or htop:
+➤ Sort by %CPU. Look for high CPU processes.
+➤ Note the command and PID.
+
+pidstat -u -p <PID> 1:
+➤ See real-time CPU use per process. If one keeps hitting 100%, investigate it.
+
+perf top:
+➤ Deep dive: shows functions consuming CPU. For profiling slow or spinning code.
+
+🟢 5. High memory usage
+Check if something is using too much RAM, and whether swap or OOM kicks in.
+
+top / htop:
+➤ Look for processes with large RES (resident memory).
+
+vmstat 1:
+➤ Check si and so. If > 0 = swapping → RAM overuse.
+
+dmesg | grep -i oom:
+➤ Look for OOM killer logs.
+
+⚫ 6. Disk full or slow
+Check space usage and disk performance.
+
+df -h:
+➤ See if any partition is 100% full.
+
+du -sh /var/*:
+➤ Find which folder is eating space (logs, uploads, etc.).
+
+iostat -xz 1:
+➤ High %util = disk overloaded.
+➤ High await = slow I/O wait times.
+
+🟤 7. Database slow / backend errors
+DB may be overloaded, waiting on disk, or running slow queries.
+
+pidstat -p <DB_PID>:
+➤ Shows DB process CPU and memory usage.
+
+iostat -xz 1:
+➤ If local DB: check disk latency.
+
+DB logs (/var/log/mysql/*.log, PostgreSQL logs):
+➤ Look for slow queries, deadlocks, timeouts.
+
+🟣 8. High network latency / timeouts
+Identify packet loss, bad DNS, or firewall problems.
+
+sar -n DEV 1:
+➤ Network stats per interface. Look for RX-ERR, TX-ERR, drops.
+
+ss -s or ss -ant:
+➤ Shows TCP connections.
+➤ Look for many in SYN-SENT → server not replying (maybe firewall).
+
+netstat -s:
+➤ Summarized packet stats.
+➤ Look for retransmits, errors, or dropped packets.
+
+dig domain.com or nslookup:
+➤ Slow DNS resolution could be the cause.

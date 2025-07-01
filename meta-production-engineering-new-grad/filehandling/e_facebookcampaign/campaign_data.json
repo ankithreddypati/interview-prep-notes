@@ -1,0 +1,31 @@
+[
+    {
+      "campaign_id": "CAMP001",
+      "budget": 1000,
+      "impressions": 50000,
+      "clicks": 250,
+      "conversions": 10
+    },
+    {
+      "campaign_id": "CAMP002",
+      "budget": 800,
+      "impressions": 40000,
+      "clicks": 200,
+      "conversions": 8
+    },
+    {
+      "campaign_id": "CAMP003",
+      "budget": 1200,
+      "impressions": 60000,
+      "clicks": 300,
+      "conversions": 12
+    },
+    {
+      "campaign_id": "CAMP004",
+      "budget": 500,
+      "impressions": 20000,
+      "clicks": 0,
+      "conversions": 5
+    }
+  ]
+  

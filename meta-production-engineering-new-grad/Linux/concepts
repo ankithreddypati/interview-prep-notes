@@ -1,0 +1,35 @@
+
+
+linux is not OS , its a Operating system kernel the distributions like ubuntu, arch , redhat are OS interacting 
+with this linux kernel 
+
+Kernel sits between software applications and hardware
+we could say kernel is used by operating system to access and interact with hardware ( cpu , mem , storage , GPU)
+
+
+
+userspace 
+ |  |      
+Kernel 
+ |  |
+hardware
+
+
+ubunut/arch - linux kernel , Windows - NT kernel , Apple - XNU kernel
+
+> output redirection echo "hi " > file.txt
+< input redirection <
+pipes | take output of onecommand to another 
+
+#!/usr/bin/env bash   = shebang
+
+owner group other
+rwx   rwx   rwx
+
+# kernel
+The kernel is the core component of an operating system.
+It directly manages hardware resources like CPU, memory, and I/O devices, and acts as a bridge between user applications and the hardware.
+It runs in kernel space with full privileges, and applications communicate with it through system calls
+
+
+
